@@ -12,7 +12,6 @@ local path = "resources/keyboard/"
 Keyboard = {}
 
 function Keyboard:new()
-    self.newTheme = "dark"
     --Keyboard stuff
     --keys1: ABC: no shift
     --keys2: ABC: shift
@@ -33,21 +32,25 @@ function Keyboard:new()
                 '<','>',';',':','\"','\'',',','.','?','/',''}
     self.keys3T = {}
     self:init()
-    self:update()
     self.active = false
     self.ellipse = love.graphics.newImage(path.."ellipse.png")
 end
 
---Called to 'reinitalise' the keyboard
-function Keyboard:init(buffer)
+--Called to 'reinitalise' the keyboard (buffer text, theme, 'type', keys that can't be pressed)
+function Keyboard:init(buffer,theme,type,noKeys)
+    self.buffer = buffer or ""
+    self.newTheme = theme
+    self.type = type
+    self.noKeys = noKeys or {}
     self.active = true
     self.isShift = 0
     self.isSymbols = false
-    self.buffer = buffer or ""
     self.keyTouch = {}
     for x=1,11 do
         self.keyTouch[x]={}
     end
+    self:update()
+    self:checkKeys()
 end
 
 --Called to render keys once instead of every frame (improves FPS)
@@ -87,6 +90,24 @@ function Keyboard:createTextures()
     end
 end
 
+--Called to match noKeys (ie disable certain keys)
+function Keyboard:checkKeys()
+    for b=1,#self.noKeys do
+        for a=1,#self.keys do
+            if (self.keys[a] == self.noKeys[b]) then
+                self.keys[a] = ''
+                break
+            end
+        end
+        if (self.noKeys[b] == "space") then
+            self.noSpace = true
+        end
+        if (self.noKeys[b] == "return") then
+            self.noReturn = true
+        end
+    end
+end
+
 --Called to update the state of the keyboard
 function Keyboard:update()
     if (not self.active) then
@@ -110,24 +131,30 @@ function Keyboard:update()
             self.backgroundColor = {0.94,0.94,0.94,1}
             self.keyColor = {0.91,0.91,0.91,1}
             self.key2Color = {0.85,0.85,0.85,1}
+            self.key2ColorNo = {0.85,0.85,0.85,0.6}
             self.keyPressedColor = {0.59,0.94,0.94,0.5}
             self.returnKeyColor = {0.197,0.313,0.941,1}
             self.backspaceColor ={0.18,0.18,0.18,1}
             self.fontColor = self.backspaceColor
+            self.fontColorNo = {0.18,0.18,0.18,0.3}
             self.font2Color = self.backgroundColor
         elseif (self.theme == "dark") then
             self.backgroundColor = {0.27,0.27,0.27,1}
             self.keyColor = {0.3,0.3,0.3,1}
             self.key2Color = {0.36,0.36,0.36,1}
+            self.key2ColorNo = {0.36,0.36,0.36,0.8}
             self.keyPressedColor = {0.22,0.53,0.61,0.5}
             self.returnKeyColor = {0,1,0.8,1}
             self.backspaceColor = {1,1,1,1}
             self.fontColor = self.backspaceColor
+            self.fontColorNo = {1,1,1,0.3}
             self.font2Color = self.fontColor
         end
         self.shiftIcon = love.graphics.newImage(path.."shift_"..self.theme..".png")
         self.shiftIconOn = love.graphics.newImage(path.."shift_"..self.theme.."_active.png")
         self.backspaceIcon = love.graphics.newImage(path.."backspace_"..self.theme..".png")
+        self.keyboardIcon = love.graphics.newImage(path.."keyboard_"..self.theme..".png")
+        self.numpadIcon = love.graphics.newImage(path.."numpad_"..self.theme..".png")
         self.buttonY = love.graphics.newImage(path.."y_"..self.theme..".png")
         self.buttonB = love.graphics.newImage(path.."b_"..self.theme..".png")
         self.buttonPlus = love.graphics.newImage(path.."+_"..self.theme..".png")
@@ -138,36 +165,36 @@ function Keyboard:update()
     if (self.isSymbols) then
         self.keys = self.keys3
         self.keysT = self.keys3T
+        self:checkKeys()
     elseif (self.isShift == 0) then
         self.keys = self.keys1
         self.keysT = self.keys1T
+        self:checkKeys()
     elseif (self.isShift == 1 or self.isShift == 2) then
         self.keys = self.keys2
         self.keysT = self.keys2T
+        self:checkKeys()
     end
 end
 
---Main draw function called (theme, 'type', keys that can't be pressed)
-function Keyboard:draw(theme,type,noKeys)
+--Main draw function called
+function Keyboard:draw()
     if (not self.active) then
         return
     end
-    self.newTheme = theme or "light"
-    self.type = type or "keyboard"
-    self.noKeys = noKeys or {}
 
     --Draw the appropriate type
     if (self.type == "numpad") then
         self:drawNumpad()
     elseif (self.type == "keyboard") then
-        self:drawKeyboard(noKeys)
+        self:drawKeyboard()
     end
 
     --Draw keyboard buffer part
     love.graphics.print(self.buffer,50,50)
 end
 
-function Keyboard:drawKeyboard(noKeys)
+function Keyboard:drawKeyboard()
     --Background
     love.graphics.setColor(unpack(self.backgroundColor))
     love.graphics.rectangle("fill",0,self.height*0.4,self.width,self.height*0.6)
@@ -175,11 +202,17 @@ function Keyboard:drawKeyboard(noKeys)
     love.graphics.setColor(1,1,1,1)
     for y=1,4 do
         for x=1,11 do
-            love.graphics.draw(self.keysT[x+((y-1)*11)],self.width*0.042+(x-1)*self.width*0.075,self.height*0.46+(y-1)*self.height*0.089)
-            if (self.keyTouch[x][y] ~= nil) then
-                love.graphics.setColor(unpack(self.keyPressedColor))
-                love.graphics.rectangle("fill",self.width*0.042+(x-1)*self.width*0.075,self.height*0.46+(y-1)*self.height*0.089,self.width*0.072,self.height*0.083)
+            if (self.keys[x+((y-1)*11)] == '') then
+                love.graphics.setColor(1,1,1,0.3)
+                love.graphics.draw(self.keysT[x+((y-1)*11)],self.width*0.042+(x-1)*self.width*0.075,self.height*0.46+(y-1)*self.height*0.089)
+            else
                 love.graphics.setColor(1,1,1,1)
+                love.graphics.draw(self.keysT[x+((y-1)*11)],self.width*0.042+(x-1)*self.width*0.075,self.height*0.46+(y-1)*self.height*0.089)
+                if (self.keyTouch[x][y] ~= nil) then
+                    love.graphics.setColor(unpack(self.keyPressedColor))
+                    love.graphics.rectangle("fill",self.width*0.042+(x-1)*self.width*0.075,self.height*0.46+(y-1)*self.height*0.089,self.width*0.072,self.height*0.083)
+                    love.graphics.setColor(1,1,1,1)
+                end
             end
         end
     end
@@ -188,6 +221,9 @@ function Keyboard:drawKeyboard(noKeys)
         love.graphics.setColor(unpack(self.key2Color))
         love.graphics.rectangle("fill",self.width*0.042+(x-1)*self.width*0.075,self.height*0.816,self.width*0.072,self.height*0.083)
     end
+    --Numpad key
+    love.graphics.setColor(1,1,1,0.9)
+    love.graphics.draw(self.numpadIcon,math.ceil(self.width*0.078-(self.scaleX*self.numpadIcon:getWidth()/2)),math.ceil(self.height*0.858-(self.scaleY*self.numpadIcon:getHeight()/2)),0,self.scaleX,self.scaleY)
     --Shift key
     if (self.isShift == 0) then
         love.graphics.setColor(1,1,1,1)
@@ -223,9 +259,17 @@ function Keyboard:drawKeyboard(noKeys)
         end
     end
     --Space key
-    love.graphics.setColor(unpack(self.key2Color))
+    if (self.noSpace) then
+        love.graphics.setColor(unpack(self.key2ColorNo))
+    else
+        love.graphics.setColor(unpack(self.key2Color))
+    end
     love.graphics.rectangle("fill",self.width*0.267,self.height*0.816,self.width*0.597,self.height*0.083)
-    love.graphics.setColor(unpack(self.fontColor))
+    if (self.noSpace) then
+        love.graphics.setColor(unpack(self.fontColorNo))
+    else
+        love.graphics.setColor(unpack(self.fontColor))
+    end
     self:printC("Space",self.width*0.566,self.height*0.84,self.fontSmall)
     love.graphics.setColor(1,1,1,1)
     love.graphics.draw(self.buttonY,math.ceil(self.width*0.839),math.ceil(self.height*0.819),0,self.scaleX,self.scaleY)
@@ -247,9 +291,17 @@ function Keyboard:drawKeyboard(noKeys)
         love.graphics.rectangle("fill",self.width*0.867,self.height*0.46,self.width*0.091,self.height*0.083)
     end
     --Return key
-    love.graphics.setColor(unpack(self.key2Color))
+    if (self.noReturn) then
+        love.graphics.setColor(unpack(self.key2ColorNo))
+    else
+        love.graphics.setColor(unpack(self.key2Color))
+    end
     love.graphics.rectangle("fill",self.width*0.867,self.height*0.549,self.width*0.091,self.height*0.172)
-    love.graphics.setColor(unpack(self.fontColor))
+    if (self.noReturn) then
+        love.graphics.setColor(unpack(self.fontColorNo))
+    else
+        love.graphics.setColor(unpack(self.fontColor))
+    end
     self:printC("Return",self.width*0.912,self.height*0.615,self.fontSmall)
     --Highlight if pressed
     if (self.returnPressed) then
@@ -305,7 +357,7 @@ function Keyboard:touchPressed(id,x,y)
         self.symbolPressed = true
     end
     --Spacebar
-    if (x > self.width*0.267 and x < self.width*0.864 and y > self.height*0.816 and y < self.height*0.899) then
+    if (x > self.width*0.267 and x < self.width*0.864 and y > self.height*0.816 and y < self.height*0.899 and not self.noSpace) then
         self.spacePressed = true
     end
     --Backspace
@@ -313,7 +365,7 @@ function Keyboard:touchPressed(id,x,y)
         self.backspacePressed = true
     end
     --Return
-    if (x > self.width*0.867 and x < self.width*0.958 and y > self.height*0.549 and y < self.height*0.721) then
+    if (x > self.width*0.867 and x < self.width*0.958 and y > self.height*0.549 and y < self.height*0.721 and not self.noSpace) then
         self.returnPressed = true
     end
     --OK/Finished
