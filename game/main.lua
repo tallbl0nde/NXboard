@@ -5,16 +5,11 @@ function love.load()
     KB:new()
 end
 
-tm = 0
 function love.update(dt)
-	tm = tm + dt
-	if (tm > 0.5) then
-    	KB:update()
-		tm = 0
-	end
+	KB:update()
 end
 
-thm = "light"
+thm = "dark"
 function love.draw()
     KB:draw(thm)
     love.graphics.setColor(1,1,1,1)
@@ -24,12 +19,15 @@ end
 
 function love.touchpressed(id,x,y)
     KB:touchPressed(id,x,y)
-    if (x > 700 and y < 100) then
+    if (x > 700 and y < 200) then
         if (thm == "light") then
             thm = "dark"
         else
             thm = "light"
         end
+    end
+    if (x < 200 and y < 200) then
+        KB:init()
     end
 end
 
