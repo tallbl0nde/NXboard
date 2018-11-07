@@ -12,8 +12,7 @@ local path = "resources/keyboard/"
 Keyboard = {}
 
 function Keyboard:new()
-    self.newTheme = "light"
-    self:update()
+    self.newTheme = "dark"
     --Keyboard stuff
     --keys1: ABC: no shift
     --keys2: ABC: shift
@@ -22,20 +21,26 @@ function Keyboard:new()
                 'q','w','e','r','t','y','u','i','o','p','/',
                 'a','s','d','f','g','h','j','k','l',':','\'',
                 'z','x','c','v','b','n','m',',','.','?','!'}
-    self.keys2={'#','£','€','$','%','^','&','*','(',')','_',
+    self.keys1T = {}
+    self.keys2={'#','','','$','%','^','&','*','(',')','_',
                 'Q','W','E','R','T','Y','U','I','O','P','@',
                 'A','S','D','F','G','H','J','K','L',';','\"',
                 'Z','X','C','V','B','N','M','<','>','+','='}
+    self.keys2T = {}
     self.keys3={'1','2','3','4','5','6','7','8','9','0','-',
                 '!','@','#','$','%','^','&','*','(',')','_',
                 '~','`','=','\\','+','{','}','|','[',']','',
                 '<','>',';',':','\"','\'',',','.','?','/',''}
+    self.keys3T = {}
     self:init()
+    self:update()
+    self.active = false
     self.ellipse = love.graphics.newImage(path.."ellipse.png")
 end
 
 --Called to 'reinitalise' the keyboard
 function Keyboard:init(buffer)
+    self.active = true
     self.isShift = 0
     self.isSymbols = false
     self.buffer = buffer or ""
@@ -45,7 +50,48 @@ function Keyboard:init(buffer)
     end
 end
 
+--Called to render keys once instead of every frame (improves FPS)
+function Keyboard:createTextures()
+    --self.keys1
+    for i=1,#self.keys1,1 do
+        local canvas = love.graphics.newCanvas(math.ceil(self.width*0.072),math.ceil(self.height*0.083))
+        love.graphics.setCanvas(canvas)
+        love.graphics.setColor(unpack(self.keyColor))
+        love.graphics.rectangle("fill",0,0,canvas:getWidth(),canvas:getHeight())
+        love.graphics.setColor(unpack(self.fontColor))
+        self:printC(self.keys1[i],canvas:getWidth()/2,canvas:getHeight()/2-(canvas:getHeight()*0.25),self.font)
+        love.graphics.setCanvas()
+        table.insert(self.keys1T,canvas)
+    end
+    --self.keys2
+    for i=1,#self.keys2,1 do
+        local canvas = love.graphics.newCanvas(math.ceil(self.width*0.072),math.ceil(self.height*0.083))
+        love.graphics.setCanvas(canvas)
+        love.graphics.setColor(unpack(self.keyColor))
+        love.graphics.rectangle("fill",0,0,canvas:getWidth(),canvas:getHeight())
+        love.graphics.setColor(unpack(self.fontColor))
+        self:printC(self.keys2[i],canvas:getWidth()/2,canvas:getHeight()/2-(canvas:getHeight()*0.25),self.font)
+        love.graphics.setCanvas()
+        table.insert(self.keys2T,canvas)
+    end
+    --self.keys3
+    for i=1,#self.keys3,1 do
+        local canvas = love.graphics.newCanvas(math.ceil(self.width*0.072),math.ceil(self.height*0.083))
+        love.graphics.setCanvas(canvas)
+        love.graphics.setColor(unpack(self.keyColor))
+        love.graphics.rectangle("fill",0,0,canvas:getWidth(),canvas:getHeight())
+        love.graphics.setColor(unpack(self.fontColor))
+        self:printC(self.keys3[i],canvas:getWidth()/2,canvas:getHeight()/2-(canvas:getHeight()*0.25),self.font)
+        love.graphics.setCanvas()
+        table.insert(self.keys3T,canvas)
+    end
+end
+
+--Called to update the state of the keyboard
 function Keyboard:update()
+    if (not self.active) then
+        return
+    end
     --Change dimensions if screen size changes (not needed?)
     if (love.graphics.getWidth() ~= self.width) then
         self.width = love.graphics.getWidth()
@@ -61,21 +107,21 @@ function Keyboard:update()
     if (self.theme ~= self.newTheme) then
         self.theme = self.newTheme
         if (self.theme == "light") then
-            self.backgroundColor = {0.94,0.94,0.94}
-            self.keyColor = {0.91,0.91,0.91}
-            self.key2Color = {0.85,0.85,0.85}
+            self.backgroundColor = {0.94,0.94,0.94,1}
+            self.keyColor = {0.91,0.91,0.91,1}
+            self.key2Color = {0.85,0.85,0.85,1}
             self.keyPressedColor = {0.59,0.94,0.94,0.5}
-            self.returnKeyColor = {0.197,0.313,0.941}
-            self.backspaceColor ={0.18,0.18,0.18}
+            self.returnKeyColor = {0.197,0.313,0.941,1}
+            self.backspaceColor ={0.18,0.18,0.18,1}
             self.fontColor = self.backspaceColor
             self.font2Color = self.backgroundColor
         elseif (self.theme == "dark") then
-            self.backgroundColor = {0.27,0.27,0.27}
-            self.keyColor = {0.3,0.3,0.3}
-            self.key2Color = {0.36,0.36,0.36}
+            self.backgroundColor = {0.27,0.27,0.27,1}
+            self.keyColor = {0.3,0.3,0.3,1}
+            self.key2Color = {0.36,0.36,0.36,1}
             self.keyPressedColor = {0.22,0.53,0.61,0.5}
-            self.returnKeyColor = {0,1,0.8}
-            self.backspaceColor = {1,1,1}
+            self.returnKeyColor = {0,1,0.8,1}
+            self.backspaceColor = {1,1,1,1}
             self.fontColor = self.backspaceColor
             self.font2Color = self.fontColor
         end
@@ -85,19 +131,30 @@ function Keyboard:update()
         self.buttonY = love.graphics.newImage(path.."y_"..self.theme..".png")
         self.buttonB = love.graphics.newImage(path.."b_"..self.theme..".png")
         self.buttonPlus = love.graphics.newImage(path.."+_"..self.theme..".png")
+        --Regen key textures:
+        self.keys1T = {}
+        self.keys2T = {}
+        self.keys3T = {}
+        self:createTextures()
     end
     --Change key grid based on current state
     if (self.isSymbols) then
         self.keys = self.keys3
+        self.keysT = self.keys3T
     elseif (self.isShift == 0) then
         self.keys = self.keys1
+        self.keysT = self.keys1T
     elseif (self.isShift == 1 or self.isShift == 2) then
         self.keys = self.keys2
+        self.keysT = self.keys2T
     end
 end
 
 --Main draw function called (theme, 'type', keys that can't be pressed)
 function Keyboard:draw(theme,type,noKeys)
+    if (not self.active) then
+        return
+    end
     self.newTheme = theme or "light"
     self.type = type or "keyboard"
     self.noKeys = noKeys or {}
@@ -118,13 +175,14 @@ function Keyboard:drawKeyboard(noKeys)
     love.graphics.setColor(unpack(self.backgroundColor))
     love.graphics.rectangle("fill",0,self.height*0.4,self.width,self.height*0.6)
     --Key 'grid'
-    love.graphics.setFont(self.font)
+    love.graphics.setColor(1,1,1,1)
     for y=1,4 do
         for x=1,11 do
+            love.graphics.draw(self.keysT[x+((y-1)*11)],self.width*0.042+(x-1)*self.width*0.075,self.height*0.46+(y-1)*self.height*0.089)
             if (self.keyTouch[x][y] ~= nil) then
-                self:drawKey(x,y,1,1,self.keys1[x+((y-1)*11)],true)
-            else
-                self:drawKey(x,y,1,1,self.keys1[x+((y-1)*11)],false)
+                love.graphics.setColor(unpack(self.keyPressedColor))
+                love.graphics.rectangle("fill",self.width*0.042+(x-1)*self.width*0.075,self.height*0.46+(y-1)*self.height*0.089,self.width*0.072,self.height*0.083)
+                love.graphics.setColor(1,1,1,1)
             end
         end
     end
@@ -219,24 +277,16 @@ function Keyboard:drawKeyboard(noKeys)
     end
 end
 
---Mainly used to draw the 'grid' of keys
-function Keyboard:drawKey(x,y,w,h,char,isPressed)
-    love.graphics.setColor(unpack(self.keyColor))
-    love.graphics.rectangle("fill",self.width*0.042+(x-1)*self.width*0.075,self.height*0.46+(y-1)*self.height*0.089,self.width*0.072*w+((w-1)*self.width*0.045),self.height*0.083*h)
-    love.graphics.setColor(unpack(self.fontColor))
-    self:printC(char,self.width*0.078+(x-1)*self.width*0.075,self.height*0.48+(y-1)*self.height*0.089,self.font)
-    if (isPressed) then
-        love.graphics.setColor(unpack(self.keyPressedColor))
-        love.graphics.rectangle("fill",self.width*0.042+(x-1)*self.width*0.075,self.height*0.46+(y-1)*self.height*0.089,self.width*0.072*w+((w-1)*self.width*0.045),self.height*0.083*h)
-    end
-end
-
 --Used for key text
 function Keyboard:printC(txt,x,y,font)
+    love.graphics.setFont(font)
     love.graphics.print(txt,math.ceil(x - font:getWidth(txt)/2),math.ceil(y - font:getHeight(txt)/2))
 end
 
 function Keyboard:touchPressed(id,x,y)
+    if (not self.active) then
+        return
+    end
     --Determine x key
     for a=1,11 do
         if (x > self.width*0.042+(a-1)*self.width*0.075 and x < self.width*0.042+(a-1)*self.width*0.075+self.width*0.072) then
@@ -249,11 +299,17 @@ function Keyboard:touchPressed(id,x,y)
             end
         end
     end
-
+    --Shift
+    if (x < self.width*0.189 and x > self.width*0.117 and y < self.height*0.899 and y > self.height*0.816) then
+        self.shiftPressed = true
+    end
+    --Symbols
+    if (x < self.width*0.264 and x > self.width*0.192 and y < self.height*0.899 and y > self.height*0.816) then
+        self.symbolPressed = true
+    end
     --Spacebar
     if (x > self.width*0.267 and x < self.width*0.864 and y > self.height*0.816 and y < self.height*0.899) then
         self.spacePressed = true
-        return
     end
     --Backspace
     if (x > self.width*0.867 and x < self.width*0.958 and y > self.height*0.46 and y < self.height*0.543) then
@@ -270,19 +326,20 @@ function Keyboard:touchPressed(id,x,y)
 end
 
 function Keyboard:touchMoved(id,x,y)
+    if (not self.active) then
+        return
+    end
     --Deselect certain keys if moved off
     --Shift
-    -- if (x > self.width*0.189 or x < self.width*0.117 or y > self.height*0.899 or y < self.height*0.816) and self.keyTouchX[id] == 2 and self.keyTouchY[id] == 5 then
-    --     --self.keyTouchX[id] = nil
-    --     --self.keyTouchY[id] = nil
-    --     return
-    -- end
-    -- --Symbols
-    -- if (x > self.width*0.264 or x < self.width*0.192 or y > self.height*0.899 or y < self.height*0.816) and self.keyTouchX[id] == 3 and self.keyTouchY[id] == 5 then
-    --     --self.keyTouchX[id] = nil
-    --     --self.keyTouchY[id] = nil
-    --     return
-    -- end
+    if (x > self.width*0.189 or x < self.width*0.117 or y > self.height*0.899 or y < self.height*0.816) and self.shiftPressed then
+        self.shiftPressed = false
+        return
+    end
+    --Symbols
+    if (x > self.width*0.264 or x < self.width*0.192 or y > self.height*0.899 or y < self.height*0.816) and self.symbolPressed then
+        self.symbolPressed = false
+        return
+    end
     --Spacebar
     if (x < self.width*0.267 or x > self.width*0.864 or y < self.height*0.816 or y > self.height*0.899) and self.spacePressed then
         self.spacePressed = nil
@@ -304,28 +361,13 @@ function Keyboard:touchMoved(id,x,y)
 end
 
 function Keyboard:touchReleased(id,x,y)
+    if (not self.active) then
+        return
+    end
     --Key grid
     for a=1,11 do
         for b=1,5 do
             if (self.keyTouch[a][b] == id) then
-                --Shift key
-                -- if (self.keyTouchX[id] == 2 and self.keyTouchY[id] == 5 and not self.isSymbols) then
-                --     if (self.isShift == 2) then
-                --         self.isShift = 0
-                --     else
-                --         self.isShift = self.isShift + 1
-                --     end
-                -- --Symbol/ABC key
-                -- elseif (self.keyTouchX[id] == 3 and self.keyTouchY[id] == 5) then
-                --     self.isSymbols = not self.isSymbols
-                --     self.isShift = 0
-                -- --Else insert a character
-                -- elseif (self.keyTouchX[id] < 12 and self.keyTouchY[id] < 5) then
-                --     self.buffer = self.buffer..self.keys[self.keyTouchX[id]+((self.keyTouchY[id]-1)*11)]
-                --     if (self.isShift ~= 2) then
-                --         self.isShift = 0
-                --     end
-                -- end
                 --Insert a character
                 if (a < 12 and b < 5) then
                     self.buffer = self.buffer..self.keys[a+((b-1)*11)]
@@ -337,12 +379,27 @@ function Keyboard:touchReleased(id,x,y)
                 self.keyTouch[a][b] = nil
                 self.keyTouch[a][b] = nil
             end
+            --Shift
+            if (self.shiftPressed and not self.isSymbols) then
+                self.shiftPressed = nil
+                if (self.isShift == 2) then
+                    self.isShift = 0
+                else
+                    self.isShift = self.isShift + 1
+                end
+            end
+            --Symbols
+            if (self.symbolPressed) then
+                self.symbolPressed = nil
+                self.isSymbols = not self.isSymbols
+                self.isShift = 0
+            end
             --Spacebar (delete later?)
             if (self.spacePressed) then
                 self.spacePressed = nil
                 self.buffer = self.buffer.." "
             end
-            --backspaceebar (delete later?)
+            --backspace (delete later?)
             if (self.backspacePressed) then
                 self.backspacePressed = nil
                 self.buffer = string.sub(self.buffer,1,-2)
@@ -354,6 +411,7 @@ function Keyboard:touchReleased(id,x,y)
             end
             if (self.okPressed) then
                 self.okPressed = false
+                self.active = false
             end
         end
     end
