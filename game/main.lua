@@ -54,6 +54,9 @@ function love.touchpressed(id,x,y)
             text2 = ""
         end
     end
+    if (x < 200 and y < 200) then
+        KB:init()
+    end
 end
 
 function love.touchmoved(id,x,y)
