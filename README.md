@@ -1,2 +1,2 @@
 # NXboard
-A replacement for the on screen keyboard for LovePotion projects
+A replica of the Nintendo Switch keyboard for use in LovePotion projects
