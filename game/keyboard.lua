@@ -11,6 +11,17 @@ local path = "resources/keyboard/"
 -- The rest of this shouldn't need to be touched
 Keyboard = {}
 
+--[[ Reference:
+Backspace = 100
+Return = 101
+OK = 102
+Toggle = 50
+Shift = 51
+Symbol = 52
+Space = 53
+Other keys = Grid ID
+]]
+
 function Keyboard:new()
     --Load resources and values
     --keys1: ABC: no shift
@@ -33,20 +44,36 @@ function Keyboard:new()
     self.keys3T = {}
     self.num={'1','2','3','4','5','6','7','8','9'}
     self.numsT = {}
+    self.buffer = "€"
     self.ellipse = love.graphics.newImage(path.."ellipse.png")
 end
 
---Called to 'reinitalise' the keyboard (buffer text, theme, 'type', keys that can't be pressed, char limit, message to display when no text)
-function Keyboard:init(buffer,theme,type,noKeys,lim,msg)
+--Called to 'reinitalise' the keyboard (variable to return to (string), buffer text, theme, 'type', keys that can't be pressed, char limit, message to display when no text)
+function Keyboard:init(varName,buffer,theme,type,noKeys,lim,msg)
     --Set up keyboard based on arguments passed
+    self.var = varName
     self.buffer = buffer or ""
     self.newTheme = theme or "light"
     self.type = type or "keyboard"
-    self.noKeys = noKeys or {}
+    --Set which keys can't be pressed
+    if (noKeys == "only_numbers") then
+        self.noKeys = {'-',
+                    'q','w','e','r','t','y','u','i','o','p','/',
+                    'a','s','d','f','g','h','j','k','l',':','\'',
+                    'z','x','c','v','b','n','m',',','.','?','!',
+                    '#','$','%','^','&','*','(',')','_','Q','W',
+                    'E','R','T','Y','U','I','O','P','@','A','S',
+                    'D','F','G','H','J','K','L',';','\"','Z','X',
+                    'C','V','B','N','M','<','>','+','=','~','`',
+                    '\\','{','}','|','[',']',"space","return"}
+    else
+        self.noKeys = noKeys or {}
+    end
     self.limit = lim or 300
     self.message = msg or ""
     self.active = true
     --Reinitalise certain variables
+    self.isTouch = false
     self.nums = self:copyTable(self.num)
     self.keyState = 5
     self.newState = 0
@@ -54,7 +81,10 @@ function Keyboard:init(buffer,theme,type,noKeys,lim,msg)
     for x=1,11 do
         self.keyTouch[x]={}
     end
-    self:update()
+    --Animation stuff
+    self.sinVal = 0
+    self.selectedKey = 1
+    self:update(0)
 end
 
 --Called to render keys once instead of every frame (improves FPS)
@@ -142,7 +172,20 @@ end
 --Called to update the state of the keyboard
 function Keyboard:update(dt)
     if (not self.active) then
+        --Update return variable if necessary (euro used as a placeholder xD)
+        if (self.buffer ~= "€") then
+            _G[self.var] = self.buffer
+            self.buffer = "€"
+        end
         return
+    end
+    --Flashing box animation
+    if (not self.isTouch) then
+        self.sinVal = self.sinVal + math.pi*dt
+        if (self.sinVal > 2*math.pi) then
+            self.sinVal = self.sinVal - 2*math.pi
+        end
+        self.boxColor = 0.85 + 0.15*math.sin(self.sinVal)
     end
     --Backspace if held down
     if (self.backspacePressed) then
@@ -230,7 +273,7 @@ function Keyboard:draw()
     end
 
     --Draw background
-    love.graphics.setColor(0,0,0,0.6)
+    love.graphics.setColor(0,0,0,0.7)
     love.graphics.rectangle("fill",0,0,self.width,self.height)
 
     --Draw the appropriate type
@@ -242,12 +285,10 @@ function Keyboard:draw()
 
     --Draw keyboard buffer part
     love.graphics.setColor(1,1,1,1)
-    love.graphics.rectangle("line", self.width*0.05, self.height*0.05, self.width*0.9, self.height*0.35)
-    love.graphics.rectangle("line", self.width*0.05+1, self.height*0.05+1, self.width*0.9-2, self.height*0.35-2)
-    love.graphics.rectangle("line", self.width*0.05+2, self.height*0.05+2, self.width*0.9-4, self.height*0.35-4)
+    self:drawRectangle(self.width*0.05, self.height*0.05, self.width*0.9, self.height*0.35,3)
     love.graphics.setFont(self.fontSmall)
     if (#self.message > 0 and #self.buffer == 0) then
-        love.graphics.setColor(1,1,1,0.3)
+        love.graphics.setColor(1,1,1,0.4)
         love.graphics.printf(self.message,self.width*0.065,self.height*0.07,self.width*0.86,"left")
     end
     love.graphics.printf(self.buffer,self.width*0.065,self.height*0.07,self.width*0.86,"left")
@@ -278,6 +319,10 @@ function Keyboard:drawKeyboard()
                     love.graphics.rectangle("fill",self.width*0.042+(x-1)*self.width*0.075,self.height*0.51+(y-1)*self.height*0.089,self.width*0.072,self.height*0.083)
                     love.graphics.setColor(1,1,1,1)
                 end
+            end
+            if (not self.isTouch and self.selectedKey == (x+((y-1)*11))) then
+                love.graphics.setColor(0,self.boxColor,1,1)
+                self:drawRectangle(self.width*0.042+(x-1)*self.width*0.075,self.height*0.51+(y-1)*self.height*0.089,self.width*0.072,self.height*0.083,5)
             end
         end
     end
@@ -322,6 +367,10 @@ function Keyboard:drawKeyboard()
             love.graphics.setColor(unpack(self.keyPressedColor))
             love.graphics.rectangle("fill",self.width*0.042+(x-1)*self.width*0.075,self.height*0.866,self.width*0.072,self.height*0.083)
         end
+        if (not self.isTouch and self.selectedKey == 49+x) then
+            love.graphics.setColor(0,self.boxColor,1,1)
+            self:drawRectangle(self.width*0.042+(x-1)*self.width*0.075,self.height*0.866,self.width*0.072,self.height*0.083,5)
+        end
     end
     --Space key
     if (self.noSpace) then
@@ -343,6 +392,10 @@ function Keyboard:drawKeyboard()
         love.graphics.setColor(unpack(self.keyPressedColor))
         love.graphics.rectangle("fill",self.width*0.267,self.height*0.866,self.width*0.597,self.height*0.083)
     end
+    if (not self.isTouch and self.selectedKey == 53) then
+        love.graphics.setColor(0,self.boxColor,1,1)
+        self:drawRectangle(self.width*0.267,self.height*0.866,self.width*0.597,self.height*0.083,5)
+    end
     --Keys (side column)
     --Backspace key
     love.graphics.setColor(unpack(self.backspaceColor))
@@ -354,6 +407,10 @@ function Keyboard:drawKeyboard()
     if (self.backspacePressed) then
         love.graphics.setColor(unpack(self.keyPressedColor))
         love.graphics.rectangle("fill",self.width*0.867,self.height*0.51,self.width*0.091,self.height*0.083)
+    end
+    if (not self.isTouch and self.selectedKey == 100) then
+        love.graphics.setColor(0,self.boxColor,1,1)
+        self:drawRectangle(self.width*0.867,self.height*0.51,self.width*0.091,self.height*0.083,5)
     end
     --Return key
     if (self.noReturn) then
@@ -373,6 +430,10 @@ function Keyboard:drawKeyboard()
         love.graphics.setColor(unpack(self.keyPressedColor))
         love.graphics.rectangle("fill",self.width*0.867,self.height*0.599,self.width*0.091,self.height*0.172)
     end
+    if (not self.isTouch and self.selectedKey == 101) then
+        love.graphics.setColor(0,self.boxColor,1,1)
+        self:drawRectangle(self.width*0.867,self.height*0.599,self.width*0.091,self.height*0.172,5)
+    end
     --OK/Enter/Finish key
     love.graphics.setColor(unpack(self.returnKeyColor))
     love.graphics.rectangle("fill",self.width*0.867,self.height*0.777,self.width*0.091,self.height*0.172)
@@ -388,6 +449,10 @@ function Keyboard:drawKeyboard()
     if (self.okPressed) then
         love.graphics.setColor(unpack(self.keyPressedColor))
         love.graphics.rectangle("fill",self.width*0.867,self.height*0.777,self.width*0.091,self.height*0.172)
+    end
+    if (not self.isTouch and self.selectedKey == 102) then
+        love.graphics.setColor(0,self.boxColor,1,1)
+        self:drawRectangle(self.width*0.867,self.height*0.777,self.width*0.091,self.height*0.172,5)
     end
 end
 
@@ -468,6 +533,14 @@ function Keyboard:drawNumpad()
     end
 end
 
+--Used for "linewidth" for rectangles
+function Keyboard:drawRectangle(x,y,w,h,linewidth)
+    local line = linewidth or 1
+    for i=0,line-1 do
+        love.graphics.rectangle("line",x-i,y-i,w+2*i,h+2*i)
+    end
+end
+
 --Used for key text
 function Keyboard:printC(txt,x,y,font)
     love.graphics.setFont(font)
@@ -483,8 +556,109 @@ function Keyboard:copyTable(tbl)
     return tbl2
 end
 
+--===== GAMEPAD EVENTS =====--
+function Keyboard:gamepadPressed(j, b)
+    self.isTouch = false
+    if (not self.active) then
+        return
+    end
+    if (b == "dpright") then
+        --Move right
+        if (self.selectedKey == 11) then
+            self.selectedKey = 100
+        elseif (self.selectedKey == 22 or self.selectedKey == 33) then
+            self.selectedKey = 101
+        elseif (self.selectedKey == 44 or self.selectedKey == 53) then
+            self.selectedKey = 102
+        elseif (self.selectedKey ~= 100 and self.selectedKey ~= 101 and self.selectedKey ~= 102) then
+            self.selectedKey = self.selectedKey + 1
+        end
+    elseif (b == "dpleft") then
+        --Move left
+        if (self.selectedKey == 100) then
+            self.selectedKey = 11
+        elseif (self.selectedKey == 101) then
+            self.selectedKey = 22
+        elseif (self.selectedKey == 102) then
+            self.selectedKey = 44
+        elseif (self.selectedKey ~= 1 and self.selectedKey ~= 12 and self.selectedKey ~= 23 and self.selectedKey ~= 34 and self.selectedKey ~= 50) then
+            self.selectedKey = self.selectedKey - 1
+        end
+    elseif (b == "dpup") then
+        --Move up
+        if (self.selectedKey == 50) then
+            self.selectedKey = 34
+        elseif (self.selectedKey == 51) then
+            self.selectedKey = 35
+        elseif (self.selectedKey == 52) then
+            self.selectedKey = 36
+        elseif (self.selectedKey == 53) then
+            self.selectedKey = 40
+        elseif (self.selectedKey > 11 and self.selectedKey ~= 100) then
+            if (self.selectedKey > 99) then
+                self.selectedKey = self.selectedKey - 1
+            else
+                self.selectedKey = self.selectedKey - 11
+            end
+        end
+    elseif (b == "dpdown") then
+        --Move down
+        if (self.selectedKey == 34) then
+            self.selectedKey = 50
+        elseif (self.selectedKey == 35) then
+            self.selectedKey = 51
+        elseif (self.selectedKey == 36) then
+            self.selectedKey = 52
+        elseif (self.selectedKey > 36 and self.selectedKey < 45) then
+            self.selectedKey = 53
+        elseif (self.selectedKey ~= 50 and self.selectedKey ~= 51 and self.selectedKey ~= 52 and self.selectedKey ~= 53 and self.selectedKey ~= 102) then
+            if (self.selectedKey > 99) then
+                self.selectedKey = self.selectedKey + 1
+            else
+                self.selectedKey = self.selectedKey + 11
+            end
+        end
+    end
+    if (b == "a") then
+        --Over Grid
+        if (self.selectedKey < 45) then
+            local key = self.selectedKey
+            local row = 1
+            while (key > 11) do
+                row = row + 1
+                key = key - 11
+            end
+            self.keyTouch[key][row] = 1
+        end
+    end
+end
+
+function Keyboard:gamepadReleased(j ,b)
+    if (not self.active) then
+        return
+    end
+    --Grid
+    for a=1,11 do
+        for b=1,4 do
+            if (self.keyTouch[a][b] == 1) then
+                --Insert a character
+                if (a < 12 and b < 5 and (#self.buffer < self.limit or self.limit == -1)) then
+                    self.buffer = self.buffer..self.keys[a+((b-1)*11)]
+                    if (self.keyState ~= 2 and self.keyState ~= 4) then
+                        self.newState = 0
+                    end
+                end
+                --Delete touch coords
+                self.keyTouch[a][b] = nil
+                self.keyTouch[a][b] = nil
+            end
+        end
+    end
+end
+
 --===== TOUCH EVENTS =====--
 function Keyboard:touchPressed(id,x,y)
+    self.isTouch = true
     if (not self.active) then
         return
     end
