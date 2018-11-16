@@ -79,7 +79,6 @@ function love.draw()
 end
 
 function love.gamepadpressed(joystick, button)
-    KB:gamepadPressed(joystick, button)
     if (not KB.active) then
         if (isTouch) then
             isTouch = false
@@ -112,6 +111,7 @@ function love.gamepadpressed(joystick, button)
             end
         end
     end
+    KB:gamepadPressed(joystick, button)
 end
 
 function love.gamepadreleased(joystick, button)

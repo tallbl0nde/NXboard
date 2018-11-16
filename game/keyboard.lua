@@ -2,7 +2,7 @@
 -- Created by: tallbl0nde
 -- A replacement for the on-screen keyboard on
 -- the switch for LovePotion projects :D
--- For usage see: ...
+-- For usage see: github.com/tallbl0nde/NXboard/readme.md
 
 -- Change this directory to the location of the
 -- resources if necessary:
@@ -10,17 +10,6 @@ local path = "resources/keyboard/"
 
 -- The rest of this shouldn't need to be touched
 Keyboard = {}
-
---[[ Reference:
-Backspace = 100
-Return = 101
-OK = 102
-Toggle = 50
-Shift = 51
-Symbol = 52
-Space = 53
-Other keys = Grid ID
-]]
 
 function Keyboard:new()
     --Load resources and values
@@ -73,7 +62,7 @@ function Keyboard:init(varName,buffer,theme,type,noKeys,lim,msg)
     self.message = msg or ""
     self.active = true
     --Reinitalise certain variables
-    self.isTouch = false
+    self.isTouch = self.isTouch or true
     self.nums = self:copyTable(self.num)
     self.keyState = 5
     self.newState = 0
@@ -178,6 +167,121 @@ function Keyboard:update(dt)
             self.buffer = "€"
         end
         return
+    end
+    --Move cursor if held
+    if (self.buttonHeld) then
+        self.buttonTime = self.buttonTime + dt
+        if (self.type == "keyboard") then
+            if (self.buttonHeld == "dpright" and self.buttonTime > 0.12) then
+                self.buttonTime = 0
+                --Move right
+                if (self.selectedKey == 11) then
+                    self.selectedKey = 100
+                elseif (self.selectedKey == 22 or self.selectedKey == 33) then
+                    self.selectedKey = 101
+                elseif (self.selectedKey == 44 or self.selectedKey == 53) then
+                    self.selectedKey = 102
+                elseif (self.selectedKey ~= 100 and self.selectedKey ~= 101 and self.selectedKey ~= 102) then
+                    self.selectedKey = self.selectedKey + 1
+                end
+            elseif (self.buttonHeld == "dpdown" and self.buttonTime > 0.12) then
+                self.buttonTime = 0
+                --Move down
+                if (self.selectedKey == 34) then
+                    self.selectedKey = 50
+                elseif (self.selectedKey == 35) then
+                    self.selectedKey = 51
+                elseif (self.selectedKey == 36) then
+                    self.selectedKey = 52
+                elseif (self.selectedKey > 36 and self.selectedKey < 45) then
+                    self.selectedKey = 53
+                elseif (self.selectedKey ~= 50 and self.selectedKey ~= 51 and self.selectedKey ~= 52 and self.selectedKey ~= 53 and self.selectedKey ~= 102) then
+                    if (self.selectedKey > 99) then
+                        self.selectedKey = self.selectedKey + 1
+                    else
+                        self.selectedKey = self.selectedKey + 11
+                    end
+                end
+            elseif (self.buttonHeld == "dpleft" and self.buttonTime > 0.12) then
+                self.buttonTime = 0
+                --Move left
+                if (self.selectedKey == 100) then
+                    self.selectedKey = 11
+                elseif (self.selectedKey == 101) then
+                    self.selectedKey = 22
+                elseif (self.selectedKey == 102) then
+                    self.selectedKey = 44
+                elseif (self.selectedKey ~= 1 and self.selectedKey ~= 12 and self.selectedKey ~= 23 and self.selectedKey ~= 34 and self.selectedKey ~= 50) then
+                    self.selectedKey = self.selectedKey - 1
+                end
+            elseif (self.buttonHeld == "dpup" and self.buttonTime > 0.12) then
+                self.buttonTime = 0
+                --Move up
+                if (self.selectedKey == 50) then
+                    self.selectedKey = 34
+                elseif (self.selectedKey == 51) then
+                    self.selectedKey = 35
+                elseif (self.selectedKey == 52) then
+                    self.selectedKey = 36
+                elseif (self.selectedKey == 53) then
+                    self.selectedKey = 40
+                elseif (self.selectedKey > 11 and self.selectedKey ~= 100) then
+                    if (self.selectedKey > 99) then
+                        self.selectedKey = self.selectedKey - 1
+                    else
+                        self.selectedKey = self.selectedKey - 11
+                    end
+                end
+            end
+        elseif (self.type == "numpad") then
+            if (self.buttonHeld == "dpright" and self.buttonTime > 0.12) then
+                self.buttonTime = 0
+                --Move right
+                if (self.selectedKey == 3) then
+                    self.selectedKey = 11
+                elseif (self.selectedKey == 6) then
+                    self.selectedKey = 12
+                elseif (self.selectedKey == 9) then
+                    self.selectedKey = 12
+                elseif (self.selectedKey == 10) then
+                    self.selectedKey = 13
+                elseif (self.selectedKey < 10) then
+                    self.selectedKey = self.selectedKey + 1
+                end
+            elseif (self.buttonHeld == "dpdown" and self.buttonTime > 0.12) then
+                self.buttonTime = 0
+                --Move down
+                if (self.selectedKey > 10 and self.selectedKey < 13) then
+                    self.selectedKey = self.selectedKey + 1
+                elseif (self.selectedKey > 6 and self.selectedKey < 10) then
+                    self.selectedKey = 10
+                elseif (self.selectedKey < 7) then
+                    self.selectedKey = self.selectedKey + 3
+                end
+            elseif (self.buttonHeld == "dpleft" and self.buttonTime > 0.12) then
+                self.buttonTime = 0
+                --Move left
+                if (self.selectedKey == 11) then
+                    self.selectedKey = 3
+                elseif (self.selectedKey == 12) then
+                    self.selectedKey = 6
+                elseif (self.selectedKey == 13) then
+                    self.selectedKey = 10
+                elseif (self.selectedKey ~= 1 and self.selectedKey ~= 4 and self.selectedKey ~= 7 and self.selectedKey ~= 10) then
+                    self.selectedKey = self.selectedKey - 1
+                end
+            elseif (self.buttonHeld == "dpup" and self.buttonTime > 0.12) then
+                self.buttonTime = 0
+                --Move up
+                if (self.selectedKey > 11) then
+                    self.selectedKey = self.selectedKey - 1
+                elseif (self.selectedKey == 10) then
+                    self.selectedKey = 8
+                elseif (self.selectedKey > 3 and self.selectedKey < 10) then
+                    self.selectedKey = self.selectedKey - 3
+                end
+            end
+        end
     end
     --Flashing box animation
     if (not self.isTouch) then
@@ -476,6 +580,10 @@ function Keyboard:drawNumpad()
                     love.graphics.setColor(1,1,1,1)
                 end
             end
+            if (not self.isTouch and self.selectedKey == (x+((y-1)*3))) then
+                love.graphics.setColor(0,self.boxColor,1,1)
+                self:drawRectangle(self.width*0.28+(x-1)*self.width*0.15,self.height*0.54+(y-1)*self.height*0.09,self.width*0.143,self.height*0.083,5)
+            end
         end
     end
 
@@ -491,6 +599,10 @@ function Keyboard:drawNumpad()
             love.graphics.rectangle("fill",self.width*0.43,self.height*0.81,self.width*0.143,self.height*0.083)
         end
     end
+    if (not self.isTouch and self.selectedKey == 10) then
+        love.graphics.setColor(0,self.boxColor,1,1)
+        self:drawRectangle(self.width*0.43,self.height*0.81,self.width*0.143,self.height*0.083,5)
+    end
 
     --Backspace key
     love.graphics.setColor(unpack(self.backspaceColor))
@@ -502,6 +614,10 @@ function Keyboard:drawNumpad()
     if (self.backspacePressed) then
         love.graphics.setColor(unpack(self.keyPressedColor))
         love.graphics.rectangle("fill",self.width*0.728,self.height*0.54,self.width*0.091,self.height*0.083)
+    end
+    if (not self.isTouch and self.selectedKey == 11) then
+        love.graphics.setColor(0,self.boxColor,1,1)
+        self:drawRectangle(self.width*0.728,self.height*0.54,self.width*0.091,self.height*0.083,5)
     end
 
     --OK/Enter/Finish key
@@ -520,6 +636,10 @@ function Keyboard:drawNumpad()
         love.graphics.setColor(unpack(self.keyPressedColor))
         love.graphics.rectangle("fill",self.width*0.728,self.height*0.63,self.width*0.091,self.height*0.172)
     end
+    if (not self.isTouch and self.selectedKey == 12) then
+        love.graphics.setColor(0,self.boxColor,1,1)
+        self:drawRectangle(self.width*0.728,self.height*0.63,self.width*0.091,self.height*0.172,5)
+    end
 
     --Keyboard key
     love.graphics.setColor(unpack(self.key2Color))
@@ -530,6 +650,10 @@ function Keyboard:drawNumpad()
     if (self.togglePressed) then
         love.graphics.setColor(unpack(self.keyPressedColor))
         love.graphics.rectangle("fill",self.width*0.728,self.height*0.81,self.width*0.091,self.height*0.083)
+    end
+    if (not self.isTouch and self.selectedKey == 13) then
+        love.graphics.setColor(0,self.boxColor,1,1)
+        self:drawRectangle(self.width*0.728,self.height*0.81,self.width*0.091,self.height*0.083,5)
     end
 end
 
@@ -558,77 +682,118 @@ end
 
 --===== GAMEPAD EVENTS =====--
 function Keyboard:gamepadPressed(j, b)
-    self.isTouch = false
+    if (self.isTouch) then
+        self.isTouch = false
+        return
+    end
     if (not self.active) then
         return
     end
-    if (b == "dpright") then
-        --Move right
-        if (self.selectedKey == 11) then
-            self.selectedKey = 100
-        elseif (self.selectedKey == 22 or self.selectedKey == 33) then
-            self.selectedKey = 101
-        elseif (self.selectedKey == 44 or self.selectedKey == 53) then
-            self.selectedKey = 102
-        elseif (self.selectedKey ~= 100 and self.selectedKey ~= 101 and self.selectedKey ~= 102) then
-            self.selectedKey = self.selectedKey + 1
-        end
-    elseif (b == "dpleft") then
-        --Move left
-        if (self.selectedKey == 100) then
-            self.selectedKey = 11
-        elseif (self.selectedKey == 101) then
-            self.selectedKey = 22
-        elseif (self.selectedKey == 102) then
-            self.selectedKey = 44
-        elseif (self.selectedKey ~= 1 and self.selectedKey ~= 12 and self.selectedKey ~= 23 and self.selectedKey ~= 34 and self.selectedKey ~= 50) then
-            self.selectedKey = self.selectedKey - 1
-        end
-    elseif (b == "dpup") then
-        --Move up
-        if (self.selectedKey == 50) then
-            self.selectedKey = 34
-        elseif (self.selectedKey == 51) then
-            self.selectedKey = 35
-        elseif (self.selectedKey == 52) then
-            self.selectedKey = 36
-        elseif (self.selectedKey == 53) then
-            self.selectedKey = 40
-        elseif (self.selectedKey > 11 and self.selectedKey ~= 100) then
-            if (self.selectedKey > 99) then
-                self.selectedKey = self.selectedKey - 1
-            else
-                self.selectedKey = self.selectedKey - 11
-            end
-        end
-    elseif (b == "dpdown") then
-        --Move down
-        if (self.selectedKey == 34) then
-            self.selectedKey = 50
-        elseif (self.selectedKey == 35) then
-            self.selectedKey = 51
-        elseif (self.selectedKey == 36) then
-            self.selectedKey = 52
-        elseif (self.selectedKey > 36 and self.selectedKey < 45) then
-            self.selectedKey = 53
-        elseif (self.selectedKey ~= 50 and self.selectedKey ~= 51 and self.selectedKey ~= 52 and self.selectedKey ~= 53 and self.selectedKey ~= 102) then
-            if (self.selectedKey > 99) then
-                self.selectedKey = self.selectedKey + 1
-            else
-                self.selectedKey = self.selectedKey + 11
-            end
-        end
+    if (b == "dpright" or b == "dpdown" or b == "dpleft" or b == "dpup") then
+        self.buttonHeld = b
+        self.buttonTime = 0.16
     end
-    if (b == "a") then
-        --Over Grid
-        if (self.selectedKey < 45) then
-            local key = self.selectedKey
-            local row = 1
-            while (key > 11) do
-                row = row + 1
-                key = key - 11
+    --Backspace shortcut
+    if (b == "b") then
+        self.backspacePressed = true
+        self.buffer = string.sub(self.buffer,1,-2)
+        self.backHeld = false
+        self.backTime = 0
+    end
+    --OK shortcut
+    if (b == "plus") then
+        self.okPressed = false
+        self.active = false
+    end
+    if (self.type == "keyboard") then
+        --Individual buttons
+        if (b == "a") then
+            --Over Grid
+            if (self.selectedKey < 45) then
+                local key = self.selectedKey
+                local row = 1
+                while (key > 11) do
+                    row = row + 1
+                    key = key - 11
+                end
+                self.keyTouch[key][row] = 1
             end
-            self.keyTouch[key][row] = 1
+            --Backspace
+            if (self.selectedKey == 100) then
+                self.backspacePressed = true
+                self.buffer = string.sub(self.buffer,1,-2)
+                self.backHeld = false
+                self.backTime = 0
+            end
+            --Return
+            if (self.selectedKey == 101) then
+                self.returnPressed = true
+            end
+            --OK
+            if (self.selectedKey == 102) then
+                self.okPressed = true
+            end
+            --Space
+            if (self.selectedKey == 53) then
+                self.spacePressed = true
+            end
+            --Symbols
+            if (self.selectedKey == 52) then
+                self.symbolPressed = true
+            end
+            --Shift
+            if (self.selectedKey == 51) then
+                self.shiftPressed = true
+            end
+            --Toggle
+            if (self.selectedKey == 50) then
+                self.togglePressed = true
+            end
+        end
+        --Shift shortcut
+        if (b == "leftstick" and self.newState ~= 4) then
+            if (self.keyState == 2) then
+                self.newState = 0
+            else
+                self.newState = self.newState + 1
+            end
+        end
+        --Space shortcut
+        if (b == "y" and not self.noSpace) then
+            if (#self.buffer < self.limit or self.limit == -1) then
+                self.buffer = self.buffer.." "
+            end
+        end
+    elseif (self.type == "numpad") then
+        --Over Grid
+        if (b == "a") then
+            if (self.selectedKey < 10) then
+                local key = self.selectedKey
+                local row = 1
+                while (key > 3) do
+                    row = row + 1
+                    key = key - 3
+                end
+                self.keyTouch[key][row] = 1
+            end
+            --Backspace
+            if (self.selectedKey == 11) then
+                self.backspacePressed = true
+                self.backHeld = false
+                self.backTime = 0
+            end
+            --Toggle
+            if (self.selectedKey == 13) then
+                self.togglePressed = true
+            end
+            --OK
+            if (self.selectedKey == 12) then
+                self.okPressed = true
+            end
+            --Zero
+            if (self.selectedKey == 10) then
+                self.zeroPressed = true
+            end
         end
     end
 end
@@ -637,21 +802,112 @@ function Keyboard:gamepadReleased(j ,b)
     if (not self.active) then
         return
     end
+    if (b == "dpup" or b == "dpright" or b == "dpdown" or b == "dpleft") then
+        self.buttonHeld = nil
+    end
+    --backspace (delete later?)
+    if (self.backspacePressed) then
+        self.backspacePressed = nil
+        self.selectedKey = 100
+        self.buffer = string.sub(self.buffer,1,-2)
+    end
+    --ok
+    if (self.okPressed) then
+        self.okPressed = false
+        self.active = false
+    end
     --Grid
-    for a=1,11 do
-        for b=1,4 do
-            if (self.keyTouch[a][b] == 1) then
-                --Insert a character
-                if (a < 12 and b < 5 and (#self.buffer < self.limit or self.limit == -1)) then
-                    self.buffer = self.buffer..self.keys[a+((b-1)*11)]
-                    if (self.keyState ~= 2 and self.keyState ~= 4) then
-                        self.newState = 0
+    if (self.type == "keyboard") then
+        if (b == "a") then
+            for a=1,11 do
+                for b=1,4 do
+                    if (self.keyTouch[a][b] == 1) then
+                        --Insert a character
+                        if (a < 12 and (#self.buffer < self.limit or self.limit == -1)) then
+                            self.buffer = self.buffer..self.keys[a+((b-1)*11)]
+                            if (self.keyState ~= 2 and self.keyState ~= 4) then
+                                self.newState = 0
+                            end
+                        end
+                        --Delete touch coords
+                        self.keyTouch[a][b] = nil
+                        self.keyTouch[a][b] = nil
                     end
                 end
-                --Delete touch coords
-                self.keyTouch[a][b] = nil
-                self.keyTouch[a][b] = nil
             end
+        end
+        --Toggle
+        if (self.togglePressed) then
+            self.togglePressed = nil
+            self.type = "numpad"
+            self.selectedKey = 13
+            self:checkKeys()
+        end
+        --Shift
+        if (self.shiftPressed and self.newState ~= 4) then
+            self.shiftPressed = nil
+            if (self.keyState == 2) then
+                self.newState = 0
+            else
+                self.newState = self.newState + 1
+            end
+        end
+        --Symbols
+        if (self.symbolPressed) then
+            self.symbolPressed = nil
+            if (self.keyState == 4) then
+                self.newState = 0
+            else
+                self.newState = 4
+            end
+        end
+        --Spacebar (delete later?)
+        if (self.spacePressed) then
+            self.spacePressed = nil
+            if (#self.buffer < self.limit or self.limit == -1) then
+                self.buffer = self.buffer.." "
+            end
+        end
+        --return
+        if (self.returnPressed) then
+            self.returnPressed = nil
+            if (#self.buffer < self.limit or self.limit == -1) then
+                self.buffer = self.buffer.."\n"
+            end
+        end
+    elseif (self.type == "numpad") then
+        if (b == "a") then
+            for a=1,3 do
+                for b=1,3 do
+                    if (self.keyTouch[a][b] == 1) then
+                        --Insert a character
+                        if (#self.buffer < self.limit or self.limit == -1) then
+                            self.buffer = self.buffer..self.nums[a+((b-1)*3)]
+                            if (self.keyState ~= 2 and self.keyState ~= 4) then
+                                self.newState = 0
+                            end
+                        end
+                        --Delete touch coords
+                        self.keyTouch[a][b] = nil
+                        self.keyTouch[a][b] = nil
+                    end
+                end
+            end
+        end
+        --Zero
+        if (self.zeroPressed) then
+            --Insert a character
+            if (#self.buffer < self.limit or self.limit == -1) then
+                self.buffer = self.buffer..'0'
+            end
+            self.zeroPressed = nil
+        end
+        --Toggle
+        if (self.togglePressed) then
+            self.togglePressed = nil
+            self.type = "keyboard"
+            self.selectedKey = 50
+            self:checkKeys()
         end
     end
 end
@@ -807,59 +1063,67 @@ function Keyboard:touchReleased(id,x,y)
                         if (self.keyState ~= 2 and self.keyState ~= 4) then
                             self.newState = 0
                         end
+                        --Set cursor position
+                        self.selectedKey = a+((b-1)*11)
                     end
                     --Delete touch coords
                     self.keyTouch[a][b] = nil
                     self.keyTouch[a][b] = nil
                 end
-                --Toggle
-                if (self.togglePressed) then
-                    self.togglePressed = nil
-                    self.type = "numpad"
-                    self:checkKeys()
-                end
-                --Shift
-                if (self.shiftPressed and self.newState ~= 4) then
-                    self.shiftPressed = nil
-                    if (self.keyState == 2) then
-                        self.newState = 0
-                    else
-                        self.newState = self.newState + 1
-                    end
-                end
-                --Symbols
-                if (self.symbolPressed) then
-                    self.symbolPressed = nil
-                    if (self.keyState == 4) then
-                        self.newState = 0
-                    else
-                        self.newState = 4
-                    end
-                end
-                --Spacebar (delete later?)
-                if (self.spacePressed) then
-                    self.spacePressed = nil
-                    if (#self.buffer < self.limit or self.limit == -1) then
-                        self.buffer = self.buffer.." "
-                    end
-                end
-                --backspace (delete later?)
-                if (self.backspacePressed) then
-                    self.backspacePressed = nil
-                    self.buffer = string.sub(self.buffer,1,-2)
-                end
-                --return
-                if (self.returnPressed) then
-                    self.returnPressed = nil
-                    if (#self.buffer < self.limit or self.limit == -1) then
-                        self.buffer = self.buffer.."\n"
-                    end
-                end
-                if (self.okPressed) then
-                    self.okPressed = false
-                    self.active = false
-                end
             end
+        end
+        --Toggle
+        if (self.togglePressed) then
+            self.togglePressed = nil
+            self.type = "numpad"
+            self.selectedKey = 13
+            self:checkKeys()
+        end
+        --Shift
+        if (self.shiftPressed and self.newState ~= 4) then
+            self.shiftPressed = nil
+            self.selectedKey = 51
+            if (self.keyState == 2) then
+                self.newState = 0
+            else
+                self.newState = self.newState + 1
+            end
+        end
+        --Symbols
+        if (self.symbolPressed) then
+            self.symbolPressed = nil
+            self.selectedKey = 52
+            if (self.keyState == 4) then
+                self.newState = 0
+            else
+                self.newState = 4
+            end
+        end
+        --Spacebar (delete later?)
+        if (self.spacePressed) then
+            self.spacePressed = nil
+            self.selectedKey = 53
+            if (#self.buffer < self.limit or self.limit == -1) then
+                self.buffer = self.buffer.." "
+            end
+        end
+        --backspace (delete later?)
+        if (self.backspacePressed) then
+            self.backspacePressed = nil
+            self.selectedKey = 100
+            self.buffer = string.sub(self.buffer,1,-2)
+        end
+        --return
+        if (self.returnPressed) then
+            self.returnPressed = nil
+            self.selectedKey = 101
+            if (#self.buffer < self.limit or self.limit == -1) then
+                self.buffer = self.buffer.."\n"
+            end
+        end
+        if (self.okPressed) then
+            self.okPressed = false
+            self.active = false
         end
     elseif (self.type == "numpad") then
         for a=1,3 do
@@ -872,6 +1136,8 @@ function Keyboard:touchReleased(id,x,y)
                     --Delete touch coords
                     self.keyTouch[a][b] = nil
                     self.keyTouch[a][b] = nil
+                    --Moev cursor
+                    self.selectedKey = a+((b-1)*3)
                 end
             end
         end
@@ -881,16 +1147,19 @@ function Keyboard:touchReleased(id,x,y)
                 self.buffer = self.buffer..'0'
             end
             self.zeroPressed = nil
+            self.selectedKey = 10
         end
         --Toggle
         if (self.togglePressed) then
             self.togglePressed = nil
             self.type = "keyboard"
+            self.selectedKey = 50
             self:checkKeys()
         end
         --Backspace
         if (self.backspacePressed) then
             self.backspacePressed = nil
+            self.selectedKey = 11
             self.buffer = string.sub(self.buffer,1,-2)
         end
         --OK
