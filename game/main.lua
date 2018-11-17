@@ -1,14 +1,13 @@
 -- This contains examples on how to use
 -- NXboard with your LovePotion project
-require "keyboard"
+require "NXboard"
 
 function love.load()
     font20 = love.graphics.newFont(20)
     --Initialise (load) the keyboard into memory
-    --(Think of it like a background task)
-    KB = Keyboard
+    KB = NXboard
     KB:new()
-    --Render drawings (many calls of love.graphics.print causes FPS drops)
+    --Pre-render drawings (many calls of love.graphics.print causes FPS drops)
     canvas = love.graphics.newCanvas(1280,720)
     love.graphics.setCanvas(canvas)
     love.graphics.setColor(0.1,0.1,0.4,1)
@@ -42,7 +41,7 @@ end
 function love.update(dt)
     --Update needs to be passed delta time
 	KB:update(dt)
-    --Animated selection box (ignore this too)
+    --Animate selection box (ignore this too)
     sinNum = sinNum + math.pi*dt
     if (sinNum >= 2*math.pi) then sinNum = sinNum - 2*math.pi end
     colorG = 0.8 + 0.2*math.sin(sinNum)
@@ -64,6 +63,7 @@ function love.draw()
     love.graphics.print(seed,105,215)
     love.graphics.printf(desc,105,315,1080,"left")
     love.graphics.setColor(0,colorG,1,1)
+    --Ignore these calls, I just got lazy :D
     if (not isTouch) then
         if (selectedBox == 1) then
             KB:drawRectangle(100,100,250,50,5)
@@ -74,12 +74,19 @@ function love.draw()
         end
     end
     --Draw the keyboard (make sure it's last so it is drawn on top!)
-    --Will not draw anything until Keyboard.active is true
+    --Will not draw anything until Keyboard.active is true (handled internally)
     KB:draw()
 end
 
+--For all the gamepad events, you pass (joystick, button)
+--and these functions will only check for gamepad events
+--if Keyboard.active is true (managed internally) Hence, to
+--avoid overlap any other events need to only be checked
+--when Keyboard.active is false as seen below (and before
+--Keyboard.gamepad...())!
 function love.gamepadpressed(joystick, button)
     if (not KB.active) then
+        --All your events go in here!!
         if (isTouch) then
             isTouch = false
             return
@@ -111,11 +118,16 @@ function love.gamepadpressed(joystick, button)
             end
         end
     end
-    KB:gamepadPressed(joystick, button)
+    --Call keyboard last!
+    KB:gamepadpressed(joystick, button)
 end
 
 function love.gamepadreleased(joystick, button)
-    KB:gamepadReleased(joystick, button)
+    if (not KB.active) then
+        --Your events go here
+    end
+    --Call keyboard last!
+    KB:gamepadreleased(joystick, button)
 end
 
 --For all the touch events, you can simply pass (id, x, y)
@@ -124,7 +136,7 @@ end
 --avoid overlap any other touches need to only be checked
 --when Keyboard.active is false as seen below
 function love.touchpressed(id,x,y)
-    KB:touchPressed(id,x,y)
+    KB:touchpressed(id,x,y)
     --If the keyboard is not on the screen (active) then check touches
     if (not KB.active) then
         --Any of your touch events go in here
@@ -149,7 +161,7 @@ function love.touchpressed(id,x,y)
 end
 
 function love.touchmoved(id,x,y)
-    KB:touchMoved(id,x,y)
+    KB:touchmoved(id,x,y)
     --If the keyboard is not on the screen then check touches
     if (not KB.active) then
         --Any of your touch events go in here
@@ -157,7 +169,7 @@ function love.touchmoved(id,x,y)
 end
 
 function love.touchreleased(id,x,y)
-    KB:touchReleased(id,x,y)
+    KB:touchreleased(id,x,y)
     --If the keyboard is not on the screen then check touches
     if (not KB.active) then
         --Any of your touch events go in here

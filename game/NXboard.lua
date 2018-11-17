@@ -1,17 +1,17 @@
--- NXBoard 1.0
+-- NXboard 1.0
 -- Created by: tallbl0nde
 -- A replacement for the on-screen keyboard on
 -- the switch for LovePotion projects :D
--- For usage see: github.com/tallbl0nde/NXboard/readme.md
+-- For usage see: github.com/tallbl0nde/NXboard/
 
 -- Change this directory to the location of the
 -- resources if necessary:
-local path = "resources/keyboard/"
+local path = "resources/NXboard/"
 
 -- The rest of this shouldn't need to be touched
-Keyboard = {}
+NXboard = {}
 
-function Keyboard:new()
+function NXboard:new()
     --Load resources and values
     --keys1: ABC: no shift
     --keys2: ABC: shift
@@ -38,13 +38,13 @@ function Keyboard:new()
 end
 
 --Called to 'reinitalise' the keyboard (variable to return to (string), buffer text, theme, 'type', keys that can't be pressed, char limit, message to display when no text)
-function Keyboard:init(varName,buffer,theme,type,noKeys,lim,msg)
+function NXboard:init(varName,buffer,theme,type,noKeys,lim,msg)
     --Set up keyboard based on arguments passed
     self.var = varName
     self.buffer = buffer or ""
     self.newTheme = theme or "light"
     self.type = type or "keyboard"
-    --Set which keys can't be pressed
+    -->Set which keys can't be pressed
     if (noKeys == "only_numbers") then
         self.noKeys = {'-',
                     'q','w','e','r','t','y','u','i','o','p','/',
@@ -60,24 +60,26 @@ function Keyboard:init(varName,buffer,theme,type,noKeys,lim,msg)
     end
     self.limit = lim or 300
     self.message = msg or ""
+    --Set the keyboard to active
     self.active = true
     --Reinitalise certain variables
     self.isTouch = self.isTouch or true
     self.nums = self:copyTable(self.num)
+    -->Determines state of keyboard (symbol/shift)
     self.keyState = 5
     self.newState = 0
     self.keyTouch = {}
     for x=1,11 do
         self.keyTouch[x]={}
     end
-    --Animation stuff
+    -->Variable required for animations
     self.sinVal = 0
     self.selectedKey = 1
     self:update(0)
 end
 
 --Called to render keys once instead of every frame (improves FPS)
-function Keyboard:createTextures()
+function NXboard:createTextures()
     --self.keys1
     for i=1,#self.keys1,1 do
         local canvas = love.graphics.newCanvas(math.ceil(self.width*0.072),math.ceil(self.height*0.083))
@@ -129,7 +131,7 @@ function Keyboard:createTextures()
 end
 
 --Called to match noKeys (ie disable certain keys)
-function Keyboard:checkKeys()
+function NXboard:checkKeys()
     self.noZero = false
     self.noSpace = false
     self.noReturn = false
@@ -158,8 +160,8 @@ function Keyboard:checkKeys()
     end
 end
 
---Called to update the state of the keyboard
-function Keyboard:update(dt)
+--Called to update parts of the keyboard
+function NXboard:update(dt)
     if (not self.active) then
         --Update return variable if necessary (euro used as a placeholder xD)
         if (self.buffer ~= "€") then
@@ -168,7 +170,7 @@ function Keyboard:update(dt)
         end
         return
     end
-    --Move cursor if held
+    --Move cursor if button held down
     if (self.buttonHeld) then
         self.buttonTime = self.buttonTime + dt
         if (self.type == "keyboard") then
@@ -371,22 +373,19 @@ end
 
 --===== DRAWING STUFF =====--
 --Main draw function called
-function Keyboard:draw()
+function NXboard:draw()
     if (not self.active) then
         return
     end
-
     --Draw background
     love.graphics.setColor(0,0,0,0.7)
     love.graphics.rectangle("fill",0,0,self.width,self.height)
-
     --Draw the appropriate type
     if (self.type == "numpad") then
         self:drawNumpad()
     elseif (self.type == "keyboard") then
         self:drawKeyboard()
     end
-
     --Draw keyboard buffer part
     love.graphics.setColor(1,1,1,1)
     self:drawRectangle(self.width*0.05, self.height*0.05, self.width*0.9, self.height*0.35,3)
@@ -404,7 +403,7 @@ function Keyboard:draw()
     end
 end
 
-function Keyboard:drawKeyboard()
+function NXboard:drawKeyboard()
     --Background
     love.graphics.setColor(unpack(self.backgroundColor))
     love.graphics.rectangle("fill",0,self.height*0.45,self.width,self.height*0.55)
@@ -412,6 +411,7 @@ function Keyboard:drawKeyboard()
     love.graphics.setColor(1,1,1,1)
     for y=1,4 do
         for x=1,11 do
+            --Darken key if 'noKeys' matches
             if (self.keys[x+((y-1)*11)] == '') then
                 love.graphics.setColor(0.92,0.92,0.92,1)
                 love.graphics.draw(self.keysT[x+((y-1)*11)],self.width*0.042+(x-1)*self.width*0.075,self.height*0.51+(y-1)*self.height*0.089)
@@ -424,6 +424,7 @@ function Keyboard:drawKeyboard()
                     love.graphics.setColor(1,1,1,1)
                 end
             end
+            --Draw a rectangle if using controller
             if (not self.isTouch and self.selectedKey == (x+((y-1)*11))) then
                 love.graphics.setColor(0,self.boxColor,1,1)
                 self:drawRectangle(self.width*0.042+(x-1)*self.width*0.075,self.height*0.51+(y-1)*self.height*0.089,self.width*0.072,self.height*0.083,5)
@@ -465,12 +466,13 @@ function Keyboard:drawKeyboard()
     else
         self:printC("#+=",self.width*0.227,self.height*0.89,self.fontSmall)
     end
-    --Highlight if pressed
     for x=1,3 do
+        --Highlight if pressed
         if (self.keyTouch[x][5] ~= nil) then
             love.graphics.setColor(unpack(self.keyPressedColor))
             love.graphics.rectangle("fill",self.width*0.042+(x-1)*self.width*0.075,self.height*0.866,self.width*0.072,self.height*0.083)
         end
+        --Draw a rectangle if using controller
         if (not self.isTouch and self.selectedKey == 49+x) then
             love.graphics.setColor(0,self.boxColor,1,1)
             self:drawRectangle(self.width*0.042+(x-1)*self.width*0.075,self.height*0.866,self.width*0.072,self.height*0.083,5)
@@ -496,6 +498,7 @@ function Keyboard:drawKeyboard()
         love.graphics.setColor(unpack(self.keyPressedColor))
         love.graphics.rectangle("fill",self.width*0.267,self.height*0.866,self.width*0.597,self.height*0.083)
     end
+    --Draw a rectangle if using controller
     if (not self.isTouch and self.selectedKey == 53) then
         love.graphics.setColor(0,self.boxColor,1,1)
         self:drawRectangle(self.width*0.267,self.height*0.866,self.width*0.597,self.height*0.083,5)
@@ -512,6 +515,7 @@ function Keyboard:drawKeyboard()
         love.graphics.setColor(unpack(self.keyPressedColor))
         love.graphics.rectangle("fill",self.width*0.867,self.height*0.51,self.width*0.091,self.height*0.083)
     end
+    --Draw a rectangle if using controller
     if (not self.isTouch and self.selectedKey == 100) then
         love.graphics.setColor(0,self.boxColor,1,1)
         self:drawRectangle(self.width*0.867,self.height*0.51,self.width*0.091,self.height*0.083,5)
@@ -534,6 +538,7 @@ function Keyboard:drawKeyboard()
         love.graphics.setColor(unpack(self.keyPressedColor))
         love.graphics.rectangle("fill",self.width*0.867,self.height*0.599,self.width*0.091,self.height*0.172)
     end
+    --Draw a rectangle if using controller
     if (not self.isTouch and self.selectedKey == 101) then
         love.graphics.setColor(0,self.boxColor,1,1)
         self:drawRectangle(self.width*0.867,self.height*0.599,self.width*0.091,self.height*0.172,5)
@@ -554,20 +559,21 @@ function Keyboard:drawKeyboard()
         love.graphics.setColor(unpack(self.keyPressedColor))
         love.graphics.rectangle("fill",self.width*0.867,self.height*0.777,self.width*0.091,self.height*0.172)
     end
+    --Draw a rectangle if using controller
     if (not self.isTouch and self.selectedKey == 102) then
         love.graphics.setColor(0,self.boxColor,1,1)
         self:drawRectangle(self.width*0.867,self.height*0.777,self.width*0.091,self.height*0.172,5)
     end
 end
 
-function Keyboard:drawNumpad()
+function NXboard:drawNumpad()
     --Background
     love.graphics.setColor(unpack(self.backgroundColor))
     love.graphics.rectangle("fill",0,self.height*0.5,self.width,self.height*0.5)
-
     --Numpad grid
     for x=1,3 do
         for y=1,3 do
+            --Darken if matches 'noKeys'
             if (self.nums[x+((y-1)*3)] == '') then
                 love.graphics.setColor(0.92,0.92,0.92,1)
                 love.graphics.draw(self.numsT[x+((y-1)*3)],self.width*0.28+(x-1)*self.width*0.15,self.height*0.54+(y-1)*self.height*0.09)
@@ -580,14 +586,14 @@ function Keyboard:drawNumpad()
                     love.graphics.setColor(1,1,1,1)
                 end
             end
+            --Draw a rectangle if using controller
             if (not self.isTouch and self.selectedKey == (x+((y-1)*3))) then
                 love.graphics.setColor(0,self.boxColor,1,1)
                 self:drawRectangle(self.width*0.28+(x-1)*self.width*0.15,self.height*0.54+(y-1)*self.height*0.09,self.width*0.143,self.height*0.083,5)
             end
         end
     end
-
-    --0
+    --Zero key stuff
     if (self.noZero) then
         love.graphics.setColor(0.92,0.92,0.92,1)
         love.graphics.draw(self.nums0,self.width*0.43,self.height*0.81)
@@ -603,7 +609,6 @@ function Keyboard:drawNumpad()
         love.graphics.setColor(0,self.boxColor,1,1)
         self:drawRectangle(self.width*0.43,self.height*0.81,self.width*0.143,self.height*0.083,5)
     end
-
     --Backspace key
     love.graphics.setColor(unpack(self.backspaceColor))
     love.graphics.rectangle("fill",self.width*0.728,self.height*0.54,self.width*0.091,self.height*0.083)
@@ -619,7 +624,6 @@ function Keyboard:drawNumpad()
         love.graphics.setColor(0,self.boxColor,1,1)
         self:drawRectangle(self.width*0.728,self.height*0.54,self.width*0.091,self.height*0.083,5)
     end
-
     --OK/Enter/Finish key
     love.graphics.setColor(unpack(self.returnKeyColor))
     love.graphics.rectangle("fill",self.width*0.728,self.height*0.63,self.width*0.091,self.height*0.172)
@@ -640,7 +644,6 @@ function Keyboard:drawNumpad()
         love.graphics.setColor(0,self.boxColor,1,1)
         self:drawRectangle(self.width*0.728,self.height*0.63,self.width*0.091,self.height*0.172,5)
     end
-
     --Keyboard key
     love.graphics.setColor(unpack(self.key2Color))
     love.graphics.rectangle("fill",self.width*0.728,self.height*0.81,self.width*0.091,self.height*0.083)
@@ -657,8 +660,8 @@ function Keyboard:drawNumpad()
     end
 end
 
---Used for "linewidth" for rectangles
-function Keyboard:drawRectangle(x,y,w,h,linewidth)
+--Used for "setlinewidth" for rectangles
+function NXboard:drawRectangle(x,y,w,h,linewidth)
     local line = linewidth or 1
     for i=0,line-1 do
         love.graphics.rectangle("line",x-i,y-i,w+2*i,h+2*i)
@@ -666,13 +669,13 @@ function Keyboard:drawRectangle(x,y,w,h,linewidth)
 end
 
 --Used for key text
-function Keyboard:printC(txt,x,y,font)
+function NXboard:printC(txt,x,y,font)
     love.graphics.setFont(font)
     love.graphics.print(txt,math.ceil(x - font:getWidth(txt)/2),math.ceil(y - font:getHeight(txt)/2))
 end
 
 --Used for behind the scenes stuff :D
-function Keyboard:copyTable(tbl)
+function NXboard:copyTable(tbl)
     local tbl2 = {}
     for i=1, #tbl do
         tbl2[i] = tbl[i]
@@ -681,7 +684,7 @@ function Keyboard:copyTable(tbl)
 end
 
 --===== GAMEPAD EVENTS =====--
-function Keyboard:gamepadPressed(j, b)
+function NXboard:gamepadpressed(j, b)
     if (self.isTouch) then
         self.isTouch = false
         return
@@ -689,6 +692,7 @@ function Keyboard:gamepadPressed(j, b)
     if (not self.active) then
         return
     end
+    --Set up button held variables
     if (b == "dpright" or b == "dpdown" or b == "dpleft" or b == "dpup") then
         self.buttonHeld = b
         self.buttonTime = 0.16
@@ -696,7 +700,6 @@ function Keyboard:gamepadPressed(j, b)
     --Backspace shortcut
     if (b == "b") then
         self.backspacePressed = true
-        self.buffer = string.sub(self.buffer,1,-2)
         self.backHeld = false
         self.backTime = 0
     end
@@ -721,7 +724,6 @@ function Keyboard:gamepadPressed(j, b)
             --Backspace
             if (self.selectedKey == 100) then
                 self.backspacePressed = true
-                self.buffer = string.sub(self.buffer,1,-2)
                 self.backHeld = false
                 self.backTime = 0
             end
@@ -798,17 +800,17 @@ function Keyboard:gamepadPressed(j, b)
     end
 end
 
-function Keyboard:gamepadReleased(j ,b)
+function NXboard:gamepadreleased(j ,b)
     if (not self.active) then
         return
     end
+    --Stop button held loops
     if (b == "dpup" or b == "dpright" or b == "dpdown" or b == "dpleft") then
         self.buttonHeld = nil
     end
     --backspace (delete later?)
     if (self.backspacePressed) then
         self.backspacePressed = nil
-        self.selectedKey = 100
         self.buffer = string.sub(self.buffer,1,-2)
     end
     --ok
@@ -913,7 +915,7 @@ function Keyboard:gamepadReleased(j ,b)
 end
 
 --===== TOUCH EVENTS =====--
-function Keyboard:touchPressed(id,x,y)
+function NXboard:touchpressed(id,x,y)
     self.isTouch = true
     if (not self.active) then
         return
@@ -994,7 +996,7 @@ function Keyboard:touchPressed(id,x,y)
     end
 end
 
-function Keyboard:touchMoved(id,x,y)
+function NXboard:touchmoved(id,x,y)
     if (not self.active) then
         return
     end
@@ -1048,7 +1050,7 @@ function Keyboard:touchMoved(id,x,y)
     end
 end
 
-function Keyboard:touchReleased(id,x,y)
+function NXboard:touchreleased(id,x,y)
     if (not self.active) then
         return
     end

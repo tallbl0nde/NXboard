@@ -45,11 +45,11 @@ BUILD           := $(TOPDIR)
 
 ROMFS           := game
 
-APP_TITLE       := NXBoard Test
-APP_AUTHOR      := TallBlonde
+APP_TITLE       := NXboard Examples
+APP_AUTHOR      := tallbl0nde
 APP_TITLEID     := 1100
-APP_VERSION     := 0.1
-APP_DESCRIPTION := LOVE for Switch
+APP_VERSION     := 1.0
+APP_DESCRIPTION := Examples for using NXboard (using LovePotion)
 
 ICON            := icon.jpg
 
