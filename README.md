@@ -1,7 +1,7 @@
 # NXboard
 A copy of the Nintendo Switch keyboard for LovePotion.
 
-![Preview](https://www.dropbox.com/s/t6cum2br2fwy94h/NXboard_preview.jpg?dl=1)
+![Preview](https://user-images.githubusercontent.com/40382856/48655519-bc827f00-ea67-11e8-909e-203f62aafdfb.jpg)
 # Preparation
 **You will need the latest _nightly_ LovePotion.elf for Switch!**
 
