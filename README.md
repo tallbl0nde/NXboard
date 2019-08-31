@@ -1,9 +1,10 @@
 # NXboard
 A copy of the Nintendo Switch keyboard for LovePotion.
 
+**This is likely no longer of use as the native keyboard can be used in newer versions of LovePotion. However, this keyboard can still be used in applet mode.**
+
 ![Preview](https://user-images.githubusercontent.com/40382856/48655519-bc827f00-ea67-11e8-909e-203f62aafdfb.jpg)
 # Preparation
-**You will need the latest _nightly_ LovePotion.elf for Switch!**
 
 Download the latest [NXboard.zip](https://github.com/tallbl0nde/NXboard/releases/latest) and extract the contents to your _game_ directory.
 _If you wish to change the location of the resources folder, make sure you change the 'path variable' in NXboard.lua_ 
